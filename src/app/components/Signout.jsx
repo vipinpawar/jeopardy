@@ -1,0 +1,31 @@
+'use client';
+
+import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import React from 'react';
+
+const SignoutButton = () => {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut({
+        redirect: false, 
+      });
+      router.push('/'); 
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleLogout}
+      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+    >
+      Signout
+    </button>
+  );
+};
+
+export default SignoutButton;
