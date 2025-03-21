@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import axios from "axios";
 
 export default function CreateCategoryForm() {
   const [categoryName, setCategoryName] = useState('');
@@ -13,25 +14,19 @@ export default function CreateCategoryForm() {
     setMessage('');
 
     try {
-      const res = await fetch('/api/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: categoryName }),
+      const res = await axios.post('/api/categories', {
+        name: categoryName,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage(data.error || 'Something went wrong');
-      } else {
-        setMessage('Category created successfully!');
-        setCategoryName('');
-      }
+      
+      setMessage('Category created successfully!');
+      setCategoryName('');
     } catch (error) {
       console.error(error);
-      setMessage('An unexpected error occurred');
+      if(error.response && error.response.data && error.response.data.error){
+        setMessage(error.response.data.error);
+      }else{
+        setMessage('An unexpected error occurred');
+      }
     }
 
     setLoading(false);

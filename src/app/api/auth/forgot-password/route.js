@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/app/lib/prisma";
 import jwt from "jsonwebtoken";
-
+import axios from "axios";
 
 export async function POST(req) {
   try {
@@ -22,20 +22,18 @@ export async function POST(req) {
 
     // 2️ Generate secure token & expiry (30 mins)
     
-    const resetToken = jwt.sign({ email:user.email },process.env.JWT_SECRET,  { expiresIn: "30m" });
+    const resetToken = jwt.sign(
+      { email:user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "30m" });
 
+   // 3 Create reset link
+   const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/reset-password?token=${resetToken}`;
 
-    // 4️ Send reset email with Brevo
-    const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/reset-password?token=${resetToken}`;
-
-    const emailRes = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "accept": "application/json",
-        "api-key": process.env.BREVO_API_KEY,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({
+  // 4️ Send reset email with Brevo using Axios
+    try{
+      const emailRes = await axios.post("https://api.brevo.com/v3/smtp/email", 
+      {
         sender: { name: "Jeopardy Quiz Team", email: "pawarvipin14@gmail.com" },
         to: [{ email:email }],
         subject: "Reset Your Password",
@@ -45,18 +43,34 @@ export async function POST(req) {
           <a href="${resetLink}" style="background-color:#4CAF50;color:white;padding:10px 20px;text-decoration:none;">Reset Password</a>
           <p>This link will expire in 30 minutes.</p>
         `,
-      }),
-    });
+    },
+      {
+        headers: {
+          accept: "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+          "content-type": "application/json",
+        },
+      }
+    );
+    
+    console.log("Brevo response:",emailRes.data);
 
-    if (!emailRes.ok) {
-      const errorData = await emailRes.json();
-      return NextResponse.json({ message: "Failed to send email", error: errorData }, { status: 500 });
-    }
-
-    return NextResponse.json({ message: "Reset email sent!" }, { status: 200 });
-
+    
+    return NextResponse.json({ message: "Reset email sent!" }, { status: 200 });  
   } catch (error) {
-    console.error("Error in password reset:", error);
-    return NextResponse.json({ message: "Server error", error: error.message }, { status: 500 });
+     console.error("Brevo email error:",error.response?.data || error.message)
+
+     return NextResponse.json(
+      {
+        message: "Failed to send email",
+        error: error.response?.data || error.message,
+      },
+      {status: 500}
+     );
   }
+
+} catch(error){
+  console.error("Error in password reset:", error);
+  return NextResponse.json({ message: "Server error", error: error.message},{ status: 500 });
+ }
 }

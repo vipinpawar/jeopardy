@@ -4,6 +4,10 @@ import { useState } from "react";
 import { z } from "zod";
 import { toast } from "react-toastify";
 import { Loader2 } from "lucide-react"; 
+import axios from "axios";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -20,10 +24,16 @@ export default function ContactForm() {
 
   const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCaptchaChange = (token) => {
+    console.log("Captcha", token);
+    setCaptchaToken(token);
   };
 
   const handleSubmit = async (e) => {
@@ -38,29 +48,39 @@ export default function ContactForm() {
       return;
     }
 
+    if(!captchaToken) {
+      toast.error("Please complete the captcha!");
+      return;
+    }
+
+    try{
+      const captchaRes = await axios.post("/api/verify-captcha",
+        { captchaToken }
+      );
+
+      const captchaData = captchaRes.data;
+
+      if(!captchaRes){
+        toast.error(captchaData.message || "CAPTCHA verification failed.");
+        return;
+      }
+    } catch{
+      toast.error("Failed to send the message. Please try again later.");
+      return;
+    }
     setFormErrors({});
     setLoading(true);
 
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        toast.error(result.message || "Something went wrong");
-        setLoading(false);
-        return;
-      }
-
-      toast.success(result.message || "Message sent successfully!");
-      setFormData({ name: "", email: "", message: "" });
+      const response = await axios.post("/api/contact", formData);
+      toast.success(response.data.message || "Message sent successfully!");
+      setFormData({ name: "", email: "", message: "" }); 
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong");
+      
+      if (error.response){
+        toast.error(error.response.data.message || "Something went wrong!");
+      }
     } finally {
       setLoading(false);
     }
@@ -122,6 +142,16 @@ export default function ContactForm() {
             {formErrors.message && (
               <p className="text-red-500 text-sm mt-1">{formErrors.message}</p>
             )}
+          </div>
+
+          
+          {/* CAPTCHA */}
+          <div className="flex justify-center mt-4">
+            <ReCAPTCHA
+              sitekey={siteKey}
+              onChange={handleCaptchaChange}
+              theme="light"
+            />
           </div>
 
           <button

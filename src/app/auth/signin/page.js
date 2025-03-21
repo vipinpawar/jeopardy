@@ -7,6 +7,7 @@ import { FcGoogle } from "react-icons/fc";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
@@ -39,6 +40,7 @@ export default function SignInForm() {
   };
 
   const handleCaptchaChange = (token) => {
+    console.log('Captcha', token);
     setCaptchaToken(token);
   };
 
@@ -64,15 +66,13 @@ export default function SignInForm() {
 
     try {
       // Validate CAPTCHA on backend (optional if already checked by Google)
-      const captchaRes = await fetch("/api/verify-captcha", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ captchaToken }),
-      });
+      const captchaRes = await axios.post("/api/verify-captcha", 
+        {captchaToken}
+      );
 
-      const captchaData = await captchaRes.json();
+      const captchaData = captchaRes.data;
 
-      if (!captchaRes.ok) {
+      if (!captchaRes) {
         toast.error(captchaData.message || "CAPTCHA verification failed.");
         return;
       }

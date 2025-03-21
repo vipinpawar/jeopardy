@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Loader2, Trash2, PlusCircle, Edit } from 'lucide-react';
+import { Loader2, Trash2, Edit } from 'lucide-react';
 import CreateCategoryForm from '@/app/components/CreateCategoryForm';
 import CreateBlogForm from '@/app/components/CreateBlogForm';
+import axios from 'axios';
 
 const categories = ['SCIENCE', 'HISTORY', 'SPORTS'];
 
@@ -17,7 +18,7 @@ const AdminPage = () => {
   const [formData, setFormData] = useState(initialFormData());
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('users'); // sidebar control
+  const [activeSection, setActiveSection] = useState('users');
 
   function initialFormData() {
     return {
@@ -39,11 +40,9 @@ const AdminPage = () => {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const res = await fetch('/api/users');
-      if (!res.ok) throw new Error('Failed to fetch users');
+      const res = await axios.get('/api/users');
 
-      const data = await res.json();
-      const sortedUsers = data.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+      const sortedUsers = res.data.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
       setUsers(sortedUsers);
     } catch (error) {
       console.error(error);
@@ -59,11 +58,7 @@ const AdminPage = () => {
 
     try {
       setDeletingUserId(userId);
-      const res = await fetch(`/api/deleteuser/${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) throw new Error('Failed to delete user');
+      await axios.delete(`/api/deleteuser/${userId}`);
 
       toast.success('User deleted successfully!');
       fetchUsers();
@@ -79,10 +74,8 @@ const AdminPage = () => {
   const fetchQuestions = async () => {
     try {
       setLoadingQuestions(true);
-      const res = await fetch('/api/questions');
-      if (!res.ok) throw new Error('Failed to fetch questions');
-      const data = await res.json();
-      setQuestions(data);
+      const res = await axios.get('/api/questions');
+      setQuestions(res.data);
     } catch (error) {
       console.error(error);
       toast.error('Error fetching questions');
@@ -141,13 +134,7 @@ const AdminPage = () => {
 
     try {
       setSaving(true);
-      const res = await fetch('/api/questions', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) throw new Error('Failed to update question');
+      await axios.put('/api/questions', formData);
 
       toast.success('Question updated successfully!');
       fetchQuestions();

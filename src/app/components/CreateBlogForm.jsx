@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from "axios";
 
 const CreateBlogForm = () => {
   const [title, setTitle] = useState('');
@@ -17,12 +18,8 @@ const CreateBlogForm = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch('/api/categories', {
-          method: 'GET',
-        });
-        if (!res.ok) throw new Error('Failed to fetch categories');
-
-        const data = await res.json();
+        const res = await axios.get('/api/categories'); 
+        const data = res.data;
         setCategories(data);
       } catch (err) {
         console.error('Failed to load categories', err);
@@ -45,27 +42,18 @@ const CreateBlogForm = () => {
       setLoading(true);
       setMessage('');
 
-      const res = await fetch('/api/blog', {
-        method: 'POST',
-        headers: {
+      const res = await axios.post('/api/blog', {
+        title,
+        image,
+        content,
+        categoryId,
+        },{
+          headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title,
-          image,
-          content,
-          categoryId,
-        }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        setMessage(errorData.error || 'Something went wrong!');
-        return;
-      }
-
-      const result = await res.json();
-      //setMessage('Blog post created successfully!');
+      const result = res.data;
       toast.success("Blog post created successfully!");
 
       // Clear form
@@ -75,7 +63,11 @@ const CreateBlogForm = () => {
       setCategoryId('');
     } catch (err) {
       console.error('Error creating blog post:', err);
-      setMessage('Error creating blog post.');
+      if (err.response && err.response.data) {
+        setMessage(err.response.data.error || 'Something went wrong!');
+      } else {
+        setMessage('Error creating blog post.');
+      }
     } finally {
       setLoading(false);
     }
@@ -102,11 +94,10 @@ const CreateBlogForm = () => {
         <div>
           <label className="block font-medium mb-1">Image URL</label>
           <input
-            type="text"
+            type="file"
             value={image}
             onChange={(e) => setImage(e.target.value)}
             className="w-full border p-2 rounded"
-            placeholder="Enter image URL"
           />
         </div>
 

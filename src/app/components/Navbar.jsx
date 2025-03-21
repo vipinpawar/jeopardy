@@ -48,6 +48,13 @@ function Navbar() {
           Leader Board
         </Link>
       </li>
+
+      <li>
+      <Link href="/store" className="hover:text-yellow-400 transition-colors duration-300 font-medium">
+        Store
+      </Link>
+    </li>
+    
       <li>
         <Link href="/blog" className="hover:text-yellow-400 transition-colors duration-300 font-medium">
           Blog

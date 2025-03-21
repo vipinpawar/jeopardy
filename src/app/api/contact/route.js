@@ -1,4 +1,5 @@
 import { z } from "zod";
+import axios from "axios";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -20,31 +21,23 @@ export async function POST(request) {
 
     const { name, email, message } = body;
 
-    // Prepare Brevo API Request
-    const brevoResUser = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": process.env.BREVO_API_KEY,
-      },
-      body: JSON.stringify({
+    const brevoResUser = await axios.post("https://api.brevo.com/v3/smtp/email", {
         sender: { name: "Jeopardy Quiz Game", email: "pawarvipin14@gmail.com" },
         to: [{ email: email }],
         templateId: parseInt(process.env.BREVO_USER_TEMPLATE_ID),
         params: {
           NAME: name,
           MESSAGE: message,
-        },
-      }),
-    });
-
-    const brevoResAdmin = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
+        }, 
+    },
+  {
       headers: {
-        "Content-Type": "application/json",
-        "api-key": process.env.BREVO_API_KEY,
-      },
-      body: JSON.stringify({
+            "Content-Type": "application/json",
+            "api-key": process.env.BREVO_API_KEY,
+          },
+  });
+
+    const brevoResAdmin = await axios.post("https://api.brevo.com/v3/smtp/email", {
         sender: { name: "Jeopardy Quiz Game", email: "pawarvipin14@gmail.com" },
         to: [{ email: process.env.ADMIN_EMAIL }],
         templateId: parseInt(process.env.BREVO_ADMIN_TEMPLATE_ID),
@@ -53,10 +46,15 @@ export async function POST(request) {
           EMAIL: email,
           MESSAGE: message,
         },
-      }),
+      
+    },{
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+      },
     });
-
-    if (!brevoResUser.ok || !brevoResAdmin.ok) {
+    
+    if (!brevoResUser.data || !brevoResAdmin.data) {
       return Response.json({ message: "Failed to send emails" }, { status: 500 });
     }
 

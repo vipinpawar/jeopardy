@@ -14,14 +14,26 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String
-  email     String   @unique
-  password  String
-  role      String   @default("user")
-  totalAmount Int    @default(0)
-  createdAt DateTime @default(now())
+  id                  String      @id @default(cuid())
+  username            String
+  email               String      @unique
+  password            String
+  role                String      @default("user")
+  membership          Membership  @default(FREE)
+  membershipStartDate DateTime?
+  membershipEndDate   DateTime?
+  totalAmount         Int         @default(0)
+  purchases   Purchase[]
+  createdAt           DateTime    @default(now())
 }
+
+enum Membership {
+  FREE
+  MONTHLY
+  YEARLY
+  LIFETIME
+}
+
 
 model Question {
   id             Int      @id @default(autoincrement())
@@ -33,7 +45,6 @@ model Question {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
-
 
 enum Category {
   SCIENCE
@@ -57,3 +68,26 @@ model Blog {
   categoryId  String
   createdAt   DateTime @default(now())
 }
+
+model Item {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  basePrice   Int
+  imageUrl    String
+  createdAt   DateTime @default(now())
+  purchases   Purchase[] // Relation to Purchase model
+}
+
+model Purchase {
+  id           String   @id @default(cuid())
+  userId       String
+  itemId       String
+  pricePaid    Int
+  purchasedAt  DateTime @default(now())
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id])
+  item         Item     @relation(fields: [itemId], references: [id])
+}
+

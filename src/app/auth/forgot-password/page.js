@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -18,26 +19,14 @@ export default function ForgotPasswordForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email}),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Failed to send reset link.");
-      } else {
-        toast.success("Reset link sent! Check your email.");
-      }
-
+      const response = await axios.post("/api/auth/forgot-password",{ email});
+      toast.success(response.data.message || "Reset link sent! Check your email.");
     } catch (error) {
       console.error(error);
-      toast.error("An error occurred. Try again.");
+      toast.error(error.response?.data?.message || "An error occurred. Try again.");
+    }finally{
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

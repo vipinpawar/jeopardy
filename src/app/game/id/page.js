@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import axios from "axios";
 
 const categories = ['SCIENCE', 'HISTORY', 'SPORTS'];
 const points = [100, 200, 300, 400, 500, 600];
@@ -24,15 +25,12 @@ const GamePage = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await fetch('/api/questions');
-        if (!res.ok) throw new Error('Failed to fetch questions');
-
-        const data = await res.json();
-        setQuestions(data);
+        const res = await axios.get('/api/questions');
+        setQuestions(res.data);
         setLoading(false);
       } catch (err) {
         console.error(err);
-        setError(err.message);
+        setError(err.response?.data?.message || "Failed to fetch questions");
         setLoading(false);
       }
     };
@@ -77,19 +75,13 @@ const GamePage = () => {
   
     try {
       // Call the API to update totalAmount in the database
-      const res = await fetch('/api/update-amount', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ totalAmount: newTotalAmount }),
+      const res = await axios.post('/api/update-amount', {
+        totalAmount: newTotalAmount,
       });
-  
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      console.log('Amount updated:', data);
-    } catch (error) {
-      console.error('Failed to update amount:', error.message);
+
+      console.log('Amount updated:', res.data);
+    } catch (err) {
+      console.error('Failed to update amount:', err.response?.data?.message || err.message);
     }
   };
   

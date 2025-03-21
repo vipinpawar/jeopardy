@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from "axios";
 
 const BlogPage = () => {
   const [categories, setCategories] = useState([]);
@@ -15,10 +16,10 @@ const BlogPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch('/api/categories');
-        const data = await res.json();
+        const res = await axios.get('/api/categories');
+        const data = res.data;
         setCategories(data);
-        console.log(data)
+        console.log("Categories:",data);
       } catch (error) {
         console.error('Error fetching categories:', error);
       } finally {
@@ -28,10 +29,10 @@ const BlogPage = () => {
 
     const fetchBlogs = async () => {
       try {
-        const res = await fetch('/api/blogpost');
-        const blogs = await res.json();
+        const res = await axios.get('/api/blogpost');
+        const blogs = res.data;
         setBlogs(blogs); // Store blogs in state if needed
-        console.log(blogs); 
+        console.log("Blogs:",blogs); 
       } catch (error) {
         console.error('Error fetching blogs:', error);
       }

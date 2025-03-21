@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import axios from "axios";
 
 const LeaderboardPage = () => {
   const [leaders, setLeaders] = useState([]);
@@ -10,13 +11,10 @@ const LeaderboardPage = () => {
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/leaderboard/get');
-        if (!res.ok) throw new Error('Failed to fetch leaderboard');
-
-        const data = await res.json();
-        setLeaders(data);
+        const res = await axios.get('/api/leaderboard/get');
+        setLeaders(res.data);
       } catch (error) {
-        console.error('Error fetching leaderboard:', error.message);
+        console.error('Error fetching leaderboard:', error.response?.data?.message || error.message);
       }
       setLoading(false);
     };

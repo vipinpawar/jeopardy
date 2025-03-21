@@ -7,7 +7,7 @@ const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters long"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
-  role: z.enum(["user", "admin"]),
+  // role: z.enum(["user", "admin"]),
 });
 
 // POST Handler
@@ -23,7 +23,8 @@ export async function POST(req) {
       return NextResponse.json({ error: errorMessages }, { status: 400 });
     }
 
-    const { username, email, password, role } = parsed.data;
+    const { username, email, password } = parsed.data;
+    // const { username, email, password, role } = parsed.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -42,9 +43,9 @@ export async function POST(req) {
         username,
         email,
         password: hashedPassword,
-        role,
+        role:'user', // ! add case if user is admin 
       },
-    });
+    }); 
 
     return NextResponse.json({
       message: "User registered successfully",

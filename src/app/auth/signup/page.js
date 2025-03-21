@@ -60,23 +60,19 @@ export default function SignUpForm() {
       setFormErrors(fieldErrors);
       return;
     }
+    console.log("Submitting formData:", formData);
 
     // No validation errors, proceed with API request
     try {
       const response = await axios.post("/api/signup", formData);
       console.log(response.data);
-      // const res = await fetch("/api/signup", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ ...formData, role: "user" }),
-      // });
       toast.success(`Welcome ${formData.username}, You signed up!`);
 
       setFormData({
         username: "",
         email: "",
         password: "",
-        role: "user",
+        // role: "user",
       });
 
       setFormErrors({});

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function ResetPasswordPage() {
       toast.error("No reset token found.");
       router.push("/auth/forgot-password");
     }
-  }, []);
+  }, [router]);
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -45,26 +46,23 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+      const res = await axios.post("/api/auth/reset-password", {
+       token, password,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Failed to reset password.");
-      } else {
-        toast.success("Password reset successfully!");
-        router.push("/auth/signin");
-      }
-
+      toast.success("Password reset successfully!");
+      router.push("/auth/signin");
     } catch (error) {
-      toast.error("An error occurred.");
-    }
+      console.error(error);
 
-    setLoading(false);
+      if(error.response) {
+        toast.error(error.response.data.message || "Failed to reset password.");
+      } else {
+        toast.error("An error occurred. Try again later.");
+      }
+    }finally {
+      setLoading(false);
+    }
   };
 
   return (
